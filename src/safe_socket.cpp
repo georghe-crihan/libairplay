@@ -5,6 +5,10 @@
 //  Copyright © 2018 LPWS. All rights reserved.
 //
 
+#ifdef AVAHI_COMPAT
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -50,3 +54,21 @@ buffer safe_socket::recv(size_t bytes_to_read) {
     result.resize(bytes_read);
     return result;
 }
+
+#ifdef AVAHI_COMPAT
+/* Based upon https://stackoverflow.com/questions/7391079/avahi-dns-sd-compatibility-layer-fails-to-run-browse-callback */
+int safe_socket::set_nonblocking(int socket) {
+    int flags;
+    /* If they have O_NONBLOCK, use the Posix way to do it */
+#if defined(O_NONBLOCK)
+    /* FIXME: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
+    if (-1 == (flags = fcntl(socket, F_GETFL, 0)))
+        flags = 0;
+    return fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+#else
+    /* Otherwise, use the old way of doing it */
+    flags = 1;
+    return ioctl(_fd, FIOBIO, &flags);
+#endif
+}
+#endif

@@ -1,0 +1,6 @@
+# Which is technically BSD-derived Makefile(5)
+CC=clang++
+CFLAGS=-c -std=c++17 -Iinclude/ -g -O2 -Wall -Wno-unused-function -Wshadow -fno-rtti -fblocks
+LDFLAGS=-stdlib=libc++ -lpthread -g
+
+include Makefile

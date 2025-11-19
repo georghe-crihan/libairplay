@@ -6,6 +6,9 @@
 #include "airplay_browser.hpp"
 
 __attribute__((weak)) int main() {
+#ifdef AVAHI_COMPAT
+    setenv("AVAHI_COMPAT_NOWARN", "y", 0); // disable the annoying warnign!
+#endif
     std::cout << "[+] Fetching AirPlay devices:" << std::endl;
     const auto devices = airplay_browser::get_devices();
     for (auto device : devices) {

@@ -8,6 +8,9 @@
 
 #include "common.hpp"
 #include "airplay_browser.hpp"
+#ifdef AVAHI_COMPAT
+#include "safe_socket.hpp"
+#endif
 
 const std::string airplay_browser::AIRPLAY_REGTYPE = "_airplay._tcp";
 
@@ -20,6 +23,9 @@ airplay_browser::airplay_browser() {
                                                                reinterpret_cast<DNSServiceBrowseReply>(&browse_callback),
                                                                this),
                     "DNSServiceBrowse failed");
+#ifdef AVAHI_COMPAT
+    safe_socket::set_nonblocking(DNSServiceRefSockFD(_dns_browse_ref));
+#endif
 }
 
 airplay_browser::~airplay_browser() {
@@ -50,6 +56,13 @@ void airplay_browser::browse_callback(DNSServiceRef sdRef,
     context->_current_resolved_service_name = std::string(serviceName);
 
     DNSServiceRef dns_resolve_ref = nullptr;
+
+#ifdef AVAHI_COMPAT
+    if (flags != kDNSServiceFlagsAdd) // Only support Add for now!
+       return;
+    flags = 0; // Otherwise the Avahi compatibility layer just chokes on MDNServiceResolve().
+#endif
+
     if(kDNSServiceErr_NoError != DNSServiceResolve(&dns_resolve_ref,
                                                    flags,
                                                    interfaceIndex,
@@ -62,7 +75,24 @@ void airplay_browser::browse_callback(DNSServiceRef sdRef,
         return;
     }
 
+#ifdef AVAHI_COMPAT
+    int socket = DNSServiceRefSockFD(dns_resolve_ref);
+    safe_socket::set_nonblocking(socket);
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(socket, &read_fds);
+
+    while (1) {
+        if(select(socket+1, &read_fds, NULL, NULL, NULL) < 0) {
+          perror("select");
+        }
+        DNSServiceProcessResult(dns_resolve_ref);
+        if (!context->_devices.empty()) /* FIXME: this works only the first time! */
+            break;
+    }
+#else
     DNSServiceProcessResult(dns_resolve_ref);
+#endif
     DNSServiceRefDeallocate(dns_resolve_ref);
 }
 
@@ -90,6 +120,23 @@ void airplay_browser::resolve_callback(DNSServiceRef sdRef,
 }
 
 void airplay_browser::wait_for_devices() {
+#ifdef AVAHI_COMPAT
+    int socket = DNSServiceRefSockFD(_dns_browse_ref);
+
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(socket, &read_fds);
+
+    while(1) {
+        if(select(socket+1, &read_fds, NULL, NULL, NULL) < 0) {
+            perror("select");
+        }
+#endif
     CHECK_AND_THROW(kDNSServiceErr_NoError == DNSServiceProcessResult(_dns_browse_ref),
                     "Error processing mDNS daemon response")
+#ifdef AVAHI_COMPAT
+        if (!_devices.empty()) // FIXME: this works only for the first time!
+            break;
+    }
+#endif
 }

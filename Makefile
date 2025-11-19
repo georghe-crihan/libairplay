@@ -3,9 +3,9 @@ TARGET=libairplay
 SRCDIR=src/
 OBJDIR=obj/
 
-CC=clang++
-CFLAGS=-c -std=c++17 -Iinclude/ -g -O2 -Wall -Wno-unused-function -Wshadow -fno-rtti -fblocks
-LDFLAGS=-stdlib=libc++ -lpthread -g
+CC?=clang++
+CFLAGS?=-c -std=c++17 -Iinclude/ -g -O2 -Wall -Wno-unused-function -Wshadow -fno-rtti -fblocks
+LDFLAGS?=-stdlib=libc++ -lpthread -g
 
 SRCS=$(wildcard $(SRCDIR)*.cpp)
 OBJS=$(addprefix $(OBJDIR),$(notdir $(SRCS:.cpp=.o)))
@@ -17,7 +17,7 @@ $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $(TARGET)
+	$(CC) $(LDFLAGS) $(OBJS) -o $(TARGET) $(LIBS)
 
 $(OBJDIR)%.o: $(SRCDIR)%.cpp
 	$(CC) $(CFLAGS) $< -o $@

@@ -1,0 +1,6 @@
+# GNU make
+CFLAGS=-c -std=c++17 -Iinclude/ -g -O2 -Wall -Wno-unused-function -Wshadow -fno-rtti -DAVAHI_COMPAT=1
+LDFLAGS=-lpthread -g
+LIBS=-lstdc++ -ldns_sd
+
+include Makefile

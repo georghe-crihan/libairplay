@@ -38,6 +38,11 @@ public:
     void connect(const address& remote_address);
     void send(const buffer& data);
     buffer recv(size_t bytes_to_read);
+#ifdef AVAHI_COMPAT
+    // This is here, just because there's no better place for it now.
+    // Needed to fix the AVAHI quircks, that requires a non-blocking socket.
+    static int set_nonblocking(int socket);
+#endif
 
 private:
     const auto_close_fd _fd;
