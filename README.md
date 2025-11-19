@@ -7,5 +7,16 @@ A C++ library to stream photos and videos via Airplay.
 including but not limited to Apple TV's.
 - Straightforward options and actions (the [airplay-hangman](https://github.com/firebolt55439/airplay-hangman) repository uses this).
 
-Be advised that this project makes use of system calls only available on macOS, and
-will require some tweaking to make it compatible with Linux-based OS's.
+# Building
+
+## MacOS
+```sh
+# Use Xcode/BSD-derived make:
+make -f Makefile.osx
+```
+
+## Linux
+```sh
+# Needs Avahi/mDNS compatibility libraries installed. Use GNU make:
+$ make -f Makefile.linux
+```
